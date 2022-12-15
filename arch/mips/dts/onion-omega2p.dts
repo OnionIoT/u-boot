@@ -13,7 +13,7 @@
 	model = "Onion Omega2+";
 
 	aliases {
-		serial0 = &uart0;c
+		serial0 = &uart0;
 		spi0 = &spi0;
 	};
 
