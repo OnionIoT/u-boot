@@ -1,0 +1,12 @@
+if BOARD_ONION_OMEGA3
+
+config SYS_BOARD
+	default "omega3"
+
+config SYS_VENDOR
+	default "onion"
+
+config SYS_CONFIG_NAME
+	default "onion-omega3"
+
+endif

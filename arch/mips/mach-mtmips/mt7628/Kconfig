@@ -33,6 +33,12 @@ config BOARD_ONION_OMEGA2P
 	  Onion Omega2+ IoT computer. Has a MT7688 SoC with 128 MiB of DDR2
 	  RAM and 32 MiB of flash (SPI).
 
+config BOARD_ONION_OMEGA3
+	bool "Onion Omega3"
+	help
+	  Onion Omega3 IoT computer. Has a MT7688 SoC with 128 MiB of DDR2
+	  RAM, 2 MiB of SPI-NOR and 256 MiB of SPI-NAND flash.
+
 config BOARD_VOCORE2
 	bool "VoCore2"
 	select SPL_SERIAL
@@ -61,6 +67,7 @@ config SYS_CONFIG_NAME
 source "board/gardena/smart-gateway-mt7688/Kconfig"
 source "board/seeed/linkit-smart-7688/Kconfig"
 source "board/onion/omega2p/Kconfig"
+source "board/onion/omega3/Kconfig"
 source "board/vocore/vocore2/Kconfig"
 
 endif
