@@ -152,6 +152,16 @@ uchar		NetBcastAddr[6] =	/* Ethernet bcast address		*/
 uchar		NetEtherNullAddr[6] =
 			{ 0, 0, 0, 0, 0, 0 };
 
+ulong	NetArpWaitPacketIP;
+ulong	NetArpWaitReplyIP;
+uchar	       *NetArpWaitPacketMAC;	/* MAC address of waiting packet's destination	*/
+uchar          *NetArpWaitTxPacket;	/* THE transmit packet			*/
+int		NetArpWaitTxPacketSize;
+uchar 		NetArpWaitPacketBuf[PKTSIZE_ALIGN + PKTALIGN];
+ulong		NetArpWaitTimerStart;
+int		NetArpWaitTry;
+
+
 /** BOOTP EXTENTIONS **/
 
 struct in_addr	NetOurSubnetMask;		/* Our subnet mask (0=unknown)	*/
@@ -1864,10 +1874,10 @@ void print_IPaddr (struct in_addr x)
 	puts (tmp);
 }
 
-struct in_addr getenv_IPaddr (char *var)
-{
-	return (string_to_ip(fw_getenv(var)));
-}
+// struct in_addr getenv_IPaddr (char *var)
+// {
+// 	return (string_to_ip(fw_getenv(var)));
+// }
 /* for web failsafe mod , added by hubo Jun 29th 2014 */
 
 /**********************************************************************************
@@ -2025,8 +2035,9 @@ restart:
 	// TODO: do we need this with uIP stack?
 	NetCopyIP( &NetOurIP, &bd->bi_ip_addr );
 
-	NetOurGatewayIP		= getenv_IPaddr( "gatewayip" );
-	NetOurSubnetMask	= getenv_IPaddr( "netmask" );
+	// hard coded for now
+	NetOurGatewayIP		=  string_to_ip("192.168.8.255");
+	NetOurSubnetMask	=  string_to_ip("255.255.255.0");
 #ifdef CONFIG_NET_VLAN
 	NetOurVLAN		= getenv_VLAN( "vlan" );
 	NetOurNativeVLAN	= getenv_VLAN( "nvlan" );
