@@ -18,7 +18,7 @@
 extern void led_on(void);
 extern void led_off(void);
 //#include <gpio.h>
-#include <spi_api.h>
+// #include <spi_api.h>
 
 static int arptimer = 0;
 
@@ -64,24 +64,24 @@ void HttpdStart( void ){
 
 int do_http_upgrade( const ulong size, const int upgrade_type ){
 
-	if ( upgrade_type == WEBFAILSAFE_UPGRADE_TYPE_UBOOT ) {
+	// if ( upgrade_type == WEBFAILSAFE_UPGRADE_TYPE_UBOOT ) {
 
-		printf( "\n\n****************************\n*     U-BOOT UPGRADING     *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n" );
-		return( raspi_erase_write( ( u8_t * )WEBFAILSAFE_UPLOAD_RAM_ADDRESS, WEBFAILSAFE_UPLOAD_UBOOT_ADDRESS - CFG_FLASH_BASE, WEBFAILSAFE_UPLOAD_UBOOT_SIZE_IN_BYTES ) );
+	// 	printf( "\n\n****************************\n*     U-BOOT UPGRADING     *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n" );
+	// 	return( raspi_erase_write( ( u8_t * )WEBFAILSAFE_UPLOAD_RAM_ADDRESS, WEBFAILSAFE_UPLOAD_UBOOT_ADDRESS - CFG_FLASH_BASE, WEBFAILSAFE_UPLOAD_UBOOT_SIZE_IN_BYTES ) );
 
-	} else if ( upgrade_type == WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE ) {
+	// } else if ( upgrade_type == WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE ) {
 
-		printf( "\n\n****************************\n*    FIRMWARE UPGRADING    *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n" );
-		return( raspi_erase_write( ( u8_t * )WEBFAILSAFE_UPLOAD_RAM_ADDRESS, WEBFAILSAFE_UPLOAD_KERNEL_ADDRESS - CFG_FLASH_BASE, size ) );
+	// 	printf( "\n\n****************************\n*    FIRMWARE UPGRADING    *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n" );
+	// 	return( raspi_erase_write( ( u8_t * )WEBFAILSAFE_UPLOAD_RAM_ADDRESS, WEBFAILSAFE_UPLOAD_KERNEL_ADDRESS - CFG_FLASH_BASE, size ) );
 
-	} else if ( upgrade_type == WEBFAILSAFE_UPGRADE_TYPE_ART ) {
+	// } else if ( upgrade_type == WEBFAILSAFE_UPGRADE_TYPE_ART ) {
 
-		printf( "\n\n****************************\n*      ART  UPGRADING      *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n" );
-		return( raspi_erase_write( ( u8_t * )WEBFAILSAFE_UPLOAD_RAM_ADDRESS, WEBFAILSAFE_UPLOAD_ART_ADDRESS - CFG_FLASH_BASE, WEBFAILSAFE_UPLOAD_ART_SIZE_IN_BYTES ) );
+	// 	printf( "\n\n****************************\n*      ART  UPGRADING      *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n" );
+	// 	return( raspi_erase_write( ( u8_t * )WEBFAILSAFE_UPLOAD_RAM_ADDRESS, WEBFAILSAFE_UPLOAD_ART_ADDRESS - CFG_FLASH_BASE, WEBFAILSAFE_UPLOAD_ART_SIZE_IN_BYTES ) );
 
-	} else {
-		return(-1);
-	}
+	// } else {
+	// 	return(-1);
+	// }
 
 	return(-1);
 }
@@ -96,9 +96,9 @@ int do_http_progress( const int state ){
 
 			// blink LED fast 10 times
 			for ( i = 0; i < 10; ++i ) {
-				led_on();
+				
 				udelay( 25000 );
-				led_off();
+				
 				udelay( 25000 );
 			}
 
@@ -113,9 +113,9 @@ int do_http_progress( const int state ){
 
 			// blink LED fast 10 times
 			for ( i = 0; i < 10; ++i ) {
-				led_on();
+				
 				udelay( 25000 );
-				led_off();
+				
 				udelay( 25000 );
 			}
 
@@ -128,9 +128,9 @@ int do_http_progress( const int state ){
 
 			// blink LED fast 10 times
 			for ( i = 0; i < 10; ++i ) {
-				led_on();
+				
 				udelay( 25000 );
-				led_off();
+				
 				udelay( 25000 );
 			}
 			printf( "HTTP ugrade is done! Rebooting...\n\n" );
@@ -141,9 +141,9 @@ int do_http_progress( const int state ){
 
 			// blink LED fast for 4 sec
 			for ( i = 0; i < 80; ++i ) {
-				led_on();
+				
 				udelay( 25000 );
-				led_off();
+				
 				udelay( 25000 );
 			}
 
