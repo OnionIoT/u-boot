@@ -1909,9 +1909,10 @@ void NetReceiveHttpd( volatile uchar * inpkt, int len ) {
  ***************************************/
 int NetLoopHttpd( void ){
 	DECLARE_GLOBAL_DATA_PTR;
+	gd->bd->bi_ip_addr = string_to_ip_ulong("192.168.8.8");
+	printf("gd->bd: %lx\n", gd->bd->bi_ip_addr);
 	bd_t *bd = gd->bd;
 	unsigned short int ip[2];
-	unsigned char ethinit_attempt = 0;
 	struct uip_eth_addr eaddr;
 
 #ifdef CONFIG_NET_MULTI
@@ -1926,78 +1927,31 @@ int NetLoopHttpd( void ){
    printf("File: %s, Func: %s, Line: %d\n", __FILE__,__FUNCTION__ , __LINE__);
 #endif   
 //
-   
-   	/* Setup packet buffers */
+
+	int ret = -EINVAL;
+
+	net_restarted = 0;
+	net_dev_exists = 0;
+	net_try_count = 1;
+	debug_cond(DEBUG_INT_STATE, "--- net_loop Entry\n");
+
+	bootstage_mark_name(BOOTSTAGE_ID_ETH_START, "eth_start");
 	net_init();
-	/* Disable hardware and put it into the reset state */
-	eth_halt();
-	/* Clear cache of packets */
-	net_rx_packet_len = 0;
-	/* Set current device according to environment variables */
-	eth_set_current();
-	/* Get hardware ready for send and receive operations */
-	eth_init();
-	
-	// if ( !net_tx_packet ) {
-	// 	int	i;
-	// 	BUFFER_ELEM *buf;
-	// 	/*
-	// 	 *	Setup packet buffers, aligned correctly.
-	// 	 */
-	// 	buf = rt2880_free_buf_entry_dequeue( &rt2880_free_buf_list ); 
-	// 	net_tx_packet = buf->pbuf;
-
-	// 	//debug( "\n net_tx_packet = 0x%08X \n", net_tx_packet );
-
-	// 	for ( i = 0; i < NUM_RX_DESC; i++ ) {
-
-	// 		buf = rt2880_free_buf_entry_dequeue( &rt2880_free_buf_list ); 
-	// 		if ( buf == NULL ) {
-	// 			printf("\n Packet Buffer is empty ! \n");
-	// 			return ( -1 );
-	// 		}
-	// 		net_rx_packets[i] = buf->pbuf;
-	// 		//printf( "\n net_rx_packets[%d] = 0x%08X\n",i,net_rx_packets[i] );
-	// 	}
-	// }
-	
-	// net_tx_packet = KSEG1ADDR( net_tx_packet );
-
-	// //printf("\n KSEG1ADDR(net_tx_packet) = 0x%08X \n",net_tx_packet);
-
-	// if ( !net_tx_packet ) {
-	// 	net_tx_packet = &NetArpWaitPacketBuf[0] + ( PKTALIGN - 1 );
-	// 	net_tx_packet -= ( ulong )net_tx_packet % PKTALIGN;
-	// }
-
-
+	if (eth_is_on_demand_init()) {
+		eth_halt();
+		eth_set_current();
+		ret = eth_init();
+		if (ret < 0) {
+			printf("eth_init failed!\n");
+			eth_halt();
+			return ret;
+		}
+	} else {
+		eth_init_state_only();
+	}
+   
 	// restart label
 restart:
-
-	//printf("\n NetLoopHttpd,call eth_halt ! \n");
-
-	net_start_again();
-
-// #ifdef CONFIG_NET_MULTI
-// 	eth_set_current();
-// #endif
-
-// 	while( ethinit_attempt < 10 ) {
-// 		if ( eth_init() ) {
-// 			ethinit_attempt = 0;
-// 			break;
-// 		} else {
-// 			ethinit_attempt++;
-// 			eth_halt();
-// 			mdelay( 1000 );
-// 		}
-// 	}
-
-// 	if ( ethinit_attempt > 0 ) {
-// 		eth_halt();
-// 		printf( "## Error: couldn't initialize eth (cable disconnected?)!\n\n" );
-// 		return( -1 );
-// 	}
 
 	// get MAC address
 #ifdef CONFIG_NET_MULTI
@@ -2021,8 +1975,8 @@ restart:
 	NetCopyIP( &net_ip, &bd->bi_ip_addr );
 
 	// hard coded for now
-	NetOurGatewayIP		=  string_to_ip("255.8.168.192");
-	NetOurSubnetMask	=  string_to_ip("0.255.255.255");
+	NetOurGatewayIP		=  string_to_ip("192.168.8.255");
+	NetOurSubnetMask	=  string_to_ip("255.255.255.0");
 #ifdef CONFIG_NET_VLAN
 	NetOurVLAN		= getenv_VLAN( "vlan" );
 	NetOurNativeVLAN	= getenv_VLAN( "nvlan" );
@@ -2031,7 +1985,7 @@ restart:
 	// start server...
 	// ulong tmp_ip_addr = ntohl( bd->bi_ip_addr );
 	// hard coded for now
-	ulong tmp_ip_addr = string_to_ip_ulong("8.8.168.192");
+	ulong tmp_ip_addr = string_to_ip_ulong("192.168.8.8");
 
 	printf( "HTTP server starting at %ld.%ld.%ld.%ld ...\n", ( tmp_ip_addr & 0xff000000 ) >> 24, ( tmp_ip_addr & 0x00ff0000 ) >> 16, ( tmp_ip_addr & 0x0000ff00 ) >> 8, ( tmp_ip_addr & 0x000000ff ) );
 	
@@ -2065,6 +2019,7 @@ restart:
 		 *	The ethernet receive routine will process it.
 		 */
 		if ( eth_rx() > 0 ) {
+			printf("Packet is received!!!\n");
 			HttpdHandler();
 		}
 
@@ -2094,6 +2049,8 @@ restart:
 
 		// show progress
 		do_http_progress( WEBFAILSAFE_PROGRESS_UPLOAD_READY );
+		net_start_again();
+
 
 		// try to make upgrade!
 		// if ( do_http_upgrade( net_boot_file_size, webfailsafe_upgrade_type ) >= 0 ) {
