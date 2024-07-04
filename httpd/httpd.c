@@ -35,7 +35,7 @@ extern const struct fsdata_file file_fail_html;
 
 extern int webfailsafe_ready_for_upgrade;
 extern int webfailsafe_upgrade_type;
-extern ulong NetBootFileXferSize;
+extern ulong net_boot_file_size;
 extern unsigned char *webfailsafe_data_pointer;
 
 // extern flash_info_t flash_info[];
@@ -569,7 +569,7 @@ void httpd_appcall(void){
 
 						// end of post upload
 						webfailsafe_post_done = 1;
-						NetBootFileXferSize = (ulong)hs->upload_total;
+						net_boot_file_size = (ulong)hs->upload_total;
 
 						// which website will be returned
 						if(!webfailsafe_upload_failed){

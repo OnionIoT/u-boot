@@ -8,6 +8,7 @@
 #include <command.h>
 #include <net.h>
 #include <asm/byteorder.h>
+#include <linux/delay.h>
 #include "httpd.h"
 
 #include "../httpd/uipopt.h"
@@ -20,6 +21,7 @@ extern void led_off(void);
 //#include <gpio.h>
 // #include <spi_api.h>
 
+extern void NetSendHttpd(void);
 static int arptimer = 0;
 
 void HttpdHandler( void ){
@@ -88,19 +90,10 @@ int do_http_upgrade( const ulong size, const int upgrade_type ){
 
 // info about current progress of failsafe mode
 int do_http_progress( const int state ){
-	unsigned char i = 0;
 
 	/* toggle LED's here */
 	switch ( state ) {
 		case WEBFAILSAFE_PROGRESS_START:
-
-			// blink LED fast 10 times
-			for ( i = 0; i < 10; ++i ) {
-				
-				udelay( 25000 );
-				
-				udelay( 25000 );
-			}
 
 			printf( "HTTP server is up and running.\n" );
 			break;
@@ -111,13 +104,6 @@ int do_http_progress( const int state ){
 
 		case WEBFAILSAFE_PROGRESS_UPLOAD_READY:
 
-			// blink LED fast 10 times
-			for ( i = 0; i < 10; ++i ) {
-				
-				udelay( 25000 );
-				
-				udelay( 25000 );
-			}
 
 			printf("HTTP upload is complete.\n");
 			printf("Upgrading...\n");
@@ -126,29 +112,16 @@ int do_http_progress( const int state ){
 
 		case WEBFAILSAFE_PROGRESS_UPGRADE_READY:
 
-			// blink LED fast 10 times
-			for ( i = 0; i < 10; ++i ) {
-				
-				udelay( 25000 );
-				
-				udelay( 25000 );
-			}
 			printf( "HTTP ugrade is done! Rebooting...\n\n" );
 			break;
 
 		case WEBFAILSAFE_PROGRESS_UPGRADE_FAILED:
 			printf( "## Error: HTTP ugrade failed!\n\n" );
 
-			// blink LED fast for 4 sec
-			for ( i = 0; i < 80; ++i ) {
-				
-				udelay( 25000 );
-				
-				udelay( 25000 );
-			}
+
 
 			// wait 1 sec
-			udelay( 1000000 );
+			mdelay( 1000 );
 
 			break;
 	}

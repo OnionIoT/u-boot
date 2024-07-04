@@ -876,6 +876,7 @@ void ip_to_string(struct in_addr x, char *s);
  * @return: in_addr struct containing the parsed IP address
  */
 struct in_addr string_to_ip(const char *s);
+ulong string_to_ip_ulong(char *s);
 
 /* Convert a VLAN id to a string */
 void vlan_to_string(ushort x, char *s);
@@ -970,10 +971,6 @@ int wget_with_dns(ulong dst_addr, char *uri);
 bool wget_validate_uri(char *uri);
 
 
-ulong	NetArpWaitPacketIP;
-ulong	NetArpWaitReplyIP;
-uchar	       *NetArpWaitPacketMAC;	/* MAC address of waiting packet's destination	*/
-uchar          *NetArpWaitTxPacket;	/* THE transmit packet			*/
 int		NetArpWaitTxPacketSize;
 uchar 		NetArpWaitPacketBuf[PKTSIZE_ALIGN + PKTALIGN];
 ulong		NetArpWaitTimerStart;

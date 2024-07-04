@@ -86,7 +86,8 @@
  * \hideinitializer
  */
 #define uip_sethostaddr(addr) do { uip_hostaddr[0] = addr[0]; \
-                              uip_hostaddr[1] = addr[1]; } while(0)
+                              uip_hostaddr[1] = addr[1]; \
+                              printf("uip_hostaddr: %u - %u", uip_hostaddr[0], uip_hostaddr[1]);} while(0)
 
 /**
  * Get the IP address of this host.

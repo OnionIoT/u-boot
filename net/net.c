@@ -135,28 +135,6 @@
 #include <linux/delay.h>
 #include "../tools/env/fw_env.h"
 
-volatile uchar *NetRxPackets[PKTBUFSRX]; /* Receive packets			*/
-
-volatile uchar *NetTxPacket = 0;	/* THE transmit packet			*/
-ulong		NetBootFileXferSize;	/* The actual transferred size of the bootfile (in bytes) */
-uchar		NetOurEther[6];		/* Our ethernet address			*/
-uchar		NetServerEther[6] =	/* Boot server enet address		*/
-			{ 0, 0, 0, 0, 0, 0 };
-ulong	NetOurIP;		/* Our IP addr (0 = unknown)		*/
-ulong	NetServerIP;		/* Our IP addr (0 = unknown)		*/
-volatile uchar *NetRxPkt;		/* Current receive packet		*/
-int		NetRxPktLen;		/* Current rx packet length		*/
-unsigned	NetIPID;		/* IP packet ID				*/
-uchar		NetBcastAddr[6] =	/* Ethernet bcast address		*/
-			{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-uchar		NetEtherNullAddr[6] =
-			{ 0, 0, 0, 0, 0, 0 };
-
-ulong	NetArpWaitPacketIP;
-ulong	NetArpWaitReplyIP;
-uchar	       *NetArpWaitPacketMAC;	/* MAC address of waiting packet's destination	*/
-uchar          *NetArpWaitTxPacket;	/* THE transmit packet			*/
-int		NetArpWaitTxPacketSize;
 uchar 		NetArpWaitPacketBuf[PKTSIZE_ALIGN + PKTALIGN];
 ulong		NetArpWaitTimerStart;
 int		NetArpWaitTry;
@@ -1887,7 +1865,7 @@ void print_IPaddr (struct in_addr x)
 #define BUF	((struct uip_eth_hdr *)&uip_buf[0])
 
 void NetSendHttpd( void ){
-	volatile uchar *tmpbuf = NetTxPacket;
+	volatile uchar *tmpbuf = net_tx_packet;
 	int i;
 
 	for ( i = 0; i < 40 + UIP_LLH_LEN; i++ ) {
@@ -1898,7 +1876,7 @@ void NetSendHttpd( void ){
 		tmpbuf[i] = uip_appdata[ i - 40 - UIP_LLH_LEN ];
 	}
 
-	eth_send( NetTxPacket, uip_len );
+	eth_send( net_tx_packet, uip_len );
 }
 
 void NetReceiveHttpd( volatile uchar * inpkt, int len ) {
@@ -1942,26 +1920,34 @@ int NetLoopHttpd( void ){
 #endif
 
 	/* XXX problem with bss workaround */
-	NetArpWaitPacketMAC	= NULL;
-	NetArpWaitTxPacket	= NULL;
-	NetArpWaitPacketIP	= 0;
-	NetArpWaitReplyIP	= 0;
-	NetArpWaitTxPacket	= NULL;
+	net_tx_packet	= NULL;
+	net_tx_packet	= NULL;
 #ifdef DEBUG	
    printf("File: %s, Func: %s, Line: %d\n", __FILE__,__FUNCTION__ , __LINE__);
 #endif   
 //
    
-	// if ( !NetTxPacket ) {
+   	/* Setup packet buffers */
+	net_init();
+	/* Disable hardware and put it into the reset state */
+	eth_halt();
+	/* Clear cache of packets */
+	net_rx_packet_len = 0;
+	/* Set current device according to environment variables */
+	eth_set_current();
+	/* Get hardware ready for send and receive operations */
+	eth_init();
+	
+	// if ( !net_tx_packet ) {
 	// 	int	i;
 	// 	BUFFER_ELEM *buf;
 	// 	/*
 	// 	 *	Setup packet buffers, aligned correctly.
 	// 	 */
 	// 	buf = rt2880_free_buf_entry_dequeue( &rt2880_free_buf_list ); 
-	// 	NetTxPacket = buf->pbuf;
+	// 	net_tx_packet = buf->pbuf;
 
-	// 	//debug( "\n NetTxPacket = 0x%08X \n", NetTxPacket );
+	// 	//debug( "\n net_tx_packet = 0x%08X \n", net_tx_packet );
 
 	// 	for ( i = 0; i < NUM_RX_DESC; i++ ) {
 
@@ -1970,20 +1956,19 @@ int NetLoopHttpd( void ){
 	// 			printf("\n Packet Buffer is empty ! \n");
 	// 			return ( -1 );
 	// 		}
-	// 		NetRxPackets[i] = buf->pbuf;
-	// 		//printf( "\n NetRxPackets[%d] = 0x%08X\n",i,NetRxPackets[i] );
+	// 		net_rx_packets[i] = buf->pbuf;
+	// 		//printf( "\n net_rx_packets[%d] = 0x%08X\n",i,net_rx_packets[i] );
 	// 	}
 	// }
 	
-	NetTxPacket = KSEG1ADDR( NetTxPacket );
+	// net_tx_packet = KSEG1ADDR( net_tx_packet );
 
-	//printf("\n KSEG1ADDR(NetTxPacket) = 0x%08X \n",NetTxPacket);
+	// //printf("\n KSEG1ADDR(net_tx_packet) = 0x%08X \n",net_tx_packet);
 
-	if ( !NetArpWaitTxPacket ) {
-		NetArpWaitTxPacket = &NetArpWaitPacketBuf[0] + ( PKTALIGN - 1 );
-		NetArpWaitTxPacket -= ( ulong )NetArpWaitTxPacket % PKTALIGN;
-		NetArpWaitTxPacketSize = 0;
-	}
+	// if ( !net_tx_packet ) {
+	// 	net_tx_packet = &NetArpWaitPacketBuf[0] + ( PKTALIGN - 1 );
+	// 	net_tx_packet -= ( ulong )net_tx_packet % PKTALIGN;
+	// }
 
 
 	// restart label
@@ -1991,60 +1976,62 @@ restart:
 
 	//printf("\n NetLoopHttpd,call eth_halt ! \n");
 
-	eth_halt();
+	net_start_again();
 
-#ifdef CONFIG_NET_MULTI
-	eth_set_current();
-#endif
+// #ifdef CONFIG_NET_MULTI
+// 	eth_set_current();
+// #endif
 
-	while( ethinit_attempt < 10 ) {
-		if ( eth_init() ) {
-			ethinit_attempt = 0;
-			break;
-		} else {
-			ethinit_attempt++;
-			eth_halt();
-			mdelay( 1000 );
-		}
-	}
+// 	while( ethinit_attempt < 10 ) {
+// 		if ( eth_init() ) {
+// 			ethinit_attempt = 0;
+// 			break;
+// 		} else {
+// 			ethinit_attempt++;
+// 			eth_halt();
+// 			mdelay( 1000 );
+// 		}
+// 	}
 
-	if ( ethinit_attempt > 0 ) {
-		eth_halt();
-		printf( "## Error: couldn't initialize eth (cable disconnected?)!\n\n" );
-		return( -1 );
-	}
+// 	if ( ethinit_attempt > 0 ) {
+// 		eth_halt();
+// 		printf( "## Error: couldn't initialize eth (cable disconnected?)!\n\n" );
+// 		return( -1 );
+// 	}
 
 	// get MAC address
 #ifdef CONFIG_NET_MULTI
-	memcpy( NetOurEther, eth_get_dev()->enetaddr, 6 );
+	memcpy( net_ethaddr, eth_get_dev()->enetaddr, 6 );
 #else
-	memcpy( NetOurEther, eth_get_ethaddr(), 6 );
+	memcpy( net_ethaddr, eth_get_ethaddr(), 6 );
 #endif
 
-	eaddr.addr[0] = NetOurEther[0];
-	eaddr.addr[1] = NetOurEther[1];
-	eaddr.addr[2] = NetOurEther[2];
-	eaddr.addr[3] = NetOurEther[3];
-	eaddr.addr[4] = NetOurEther[4];
-	eaddr.addr[5] = NetOurEther[5];
+	eaddr.addr[0] = net_ethaddr[0];
+	eaddr.addr[1] = net_ethaddr[1];
+	eaddr.addr[2] = net_ethaddr[2];
+	eaddr.addr[3] = net_ethaddr[3];
+	eaddr.addr[4] = net_ethaddr[4];
+	eaddr.addr[5] = net_ethaddr[5];
 
 	// set MAC address
 	uip_setethaddr( eaddr );
 
 	// set ip and other addresses
 	// TODO: do we need this with uIP stack?
-	NetCopyIP( &NetOurIP, &bd->bi_ip_addr );
+	NetCopyIP( &net_ip, &bd->bi_ip_addr );
 
 	// hard coded for now
-	NetOurGatewayIP		=  string_to_ip("192.168.8.255");
-	NetOurSubnetMask	=  string_to_ip("255.255.255.0");
+	NetOurGatewayIP		=  string_to_ip("255.8.168.192");
+	NetOurSubnetMask	=  string_to_ip("0.255.255.255");
 #ifdef CONFIG_NET_VLAN
 	NetOurVLAN		= getenv_VLAN( "vlan" );
 	NetOurNativeVLAN	= getenv_VLAN( "nvlan" );
 #endif
 
 	// start server...
-	ulong tmp_ip_addr = ntohl( bd->bi_ip_addr );
+	// ulong tmp_ip_addr = ntohl( bd->bi_ip_addr );
+	// hard coded for now
+	ulong tmp_ip_addr = string_to_ip_ulong("8.8.168.192");
 
 	printf( "HTTP server starting at %ld.%ld.%ld.%ld ...\n", ( tmp_ip_addr & 0xff000000 ) >> 24, ( tmp_ip_addr & 0x00ff0000 ) >> 16, ( tmp_ip_addr & 0x0000ff00 ) >> 8, ( tmp_ip_addr & 0x000000ff ) );
 	
@@ -2109,7 +2096,7 @@ restart:
 		do_http_progress( WEBFAILSAFE_PROGRESS_UPLOAD_READY );
 
 		// try to make upgrade!
-		// if ( do_http_upgrade( NetBootFileXferSize, webfailsafe_upgrade_type ) >= 0 ) {
+		// if ( do_http_upgrade( net_boot_file_size, webfailsafe_upgrade_type ) >= 0 ) {
 		// 	mdelay( 500 );
 		// 	do_http_progress( WEBFAILSAFE_PROGRESS_UPGRADE_READY );
 		// 	mdelay( 500 );
@@ -2125,7 +2112,7 @@ restart:
 	webfailsafe_ready_for_upgrade = 0;
 	webfailsafe_upgrade_type = WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE;
 
-	NetBootFileXferSize = 0;
+	net_boot_file_size = 0;
 
 	do_http_progress( WEBFAILSAFE_PROGRESS_UPGRADE_FAILED );
 
