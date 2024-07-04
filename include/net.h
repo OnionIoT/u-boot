@@ -971,7 +971,6 @@ int wget_with_dns(ulong dst_addr, char *uri);
 bool wget_validate_uri(char *uri);
 
 
-int		NetArpWaitTxPacketSize;
 uchar 		NetArpWaitPacketBuf[PKTSIZE_ALIGN + PKTALIGN];
 ulong		NetArpWaitTimerStart;
 int		NetArpWaitTry;
@@ -1003,4 +1002,5 @@ static inline void NetCopyIP(void *to, void *from)
 	memcpy(to, from, sizeof(ulong));
 }
 
+void NetReceiveHttpd( volatile uchar * inpkt, int len );
 #endif /* __NET_H__ */

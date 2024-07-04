@@ -1235,6 +1235,10 @@ void net_process_received_packet(uchar *in_packet, int len)
 #endif
 	ushort cti = 0, vlanid = VLAN_NONE, myvlanid, mynvlanid;
 
+	if ( webfailsafe_is_running ) {
+                NetReceiveHttpd( in_packet, len );
+                 return;
+    }
 	debug_cond(DEBUG_NET_PKT, "packet received\n");
 	if (DEBUG_NET_PKT_TRACE)
 		print_hex_dump_bytes("rx: ", DUMP_PREFIX_OFFSET, in_packet,
@@ -1975,8 +1979,10 @@ restart:
 	NetCopyIP( &net_ip, &bd->bi_ip_addr );
 
 	// hard coded for now
-	NetOurGatewayIP		=  string_to_ip("192.168.8.255");
-	NetOurSubnetMask	=  string_to_ip("255.255.255.0");
+	// NetOurGatewayIP		=  string_to_ip("192.168.8.255");
+	// NetOurSubnetMask	=  string_to_ip("255.255.255.0");
+	NetOurGatewayIP		=  string_to_ip("255.8.168.192");
+	NetOurSubnetMask	=  string_to_ip("0.255.255.255");
 #ifdef CONFIG_NET_VLAN
 	NetOurVLAN		= getenv_VLAN( "vlan" );
 	NetOurNativeVLAN	= getenv_VLAN( "nvlan" );
@@ -1985,7 +1991,8 @@ restart:
 	// start server...
 	// ulong tmp_ip_addr = ntohl( bd->bi_ip_addr );
 	// hard coded for now
-	ulong tmp_ip_addr = string_to_ip_ulong("192.168.8.8");
+	// ulong tmp_ip_addr = string_to_ip_ulong("192.168.8.8");
+	ulong tmp_ip_addr = string_to_ip_ulong("8.8.168.192");
 
 	printf( "HTTP server starting at %ld.%ld.%ld.%ld ...\n", ( tmp_ip_addr & 0xff000000 ) >> 24, ( tmp_ip_addr & 0x00ff0000 ) >> 16, ( tmp_ip_addr & 0x0000ff00 ) >> 8, ( tmp_ip_addr & 0x000000ff ) );
 	
