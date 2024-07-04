@@ -140,8 +140,7 @@ void uip_arp_timer(void);
  * \hideinitializer
  */
 #define uip_setnetmask(addr) do { uip_arp_netmask[0] = addr[0]; \
-                                  uip_arp_netmask[1] = addr[1]; \
-                                  printf("uip_arp_netmask: %u - %u", uip_arp_netmask[0], uip_arp_netmask[1]);} while(0)
+                                  uip_arp_netmask[1] = addr[1]; } while(0)
 
 
 /**
