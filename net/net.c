@@ -142,10 +142,6 @@ int		NetArpWaitTry;
 
 /** BOOTP EXTENTIONS **/
 
-struct in_addr	NetOurSubnetMask;		/* Our subnet mask (0=unknown)	*/
-struct in_addr	NetOurGatewayIP;		/* Our gateways IP address	*/
-struct in_addr	NetOurDNSIP;			/* Our DNS IP address		*/
-
 #ifdef CONFIG_NET_VLAN
 /* XXX in both little & big endian machines 0xFFFF == ntohs(-1) */
 ushort		NetOurVLAN = 0xFFFF;		/* default is without VLAN	*/
@@ -1914,7 +1910,6 @@ void NetReceiveHttpd( volatile uchar * inpkt, int len ) {
 int NetLoopHttpd( void ){
 	DECLARE_GLOBAL_DATA_PTR;
 	gd->bd->bi_ip_addr = string_to_ip_ulong("192.168.8.8");
-	printf("gd->bd: %lx\n", gd->bd->bi_ip_addr);
 	bd_t *bd = gd->bd;
 	unsigned short int ip[2];
 	struct uip_eth_addr eaddr;
@@ -1979,19 +1974,15 @@ restart:
 	NetCopyIP( &net_ip, &bd->bi_ip_addr );
 
 	// hard coded for now
-	// NetOurGatewayIP		=  string_to_ip("192.168.8.255");
-	// NetOurSubnetMask	=  string_to_ip("255.255.255.0");
-	NetOurGatewayIP		=  string_to_ip("255.8.168.192");
-	NetOurSubnetMask	=  string_to_ip("0.255.255.255");
+	net_gateway		=  string_to_ip("255.8.168.192");
+	net_netmask	=  string_to_ip("0.255.255.255");
 #ifdef CONFIG_NET_VLAN
 	NetOurVLAN		= getenv_VLAN( "vlan" );
 	NetOurNativeVLAN	= getenv_VLAN( "nvlan" );
 #endif
 
 	// start server...
-	// ulong tmp_ip_addr = ntohl( bd->bi_ip_addr );
 	// hard coded for now
-	// ulong tmp_ip_addr = string_to_ip_ulong("192.168.8.8");
 	ulong tmp_ip_addr = string_to_ip_ulong("8.8.168.192");
 
 	printf( "HTTP server starting at %ld.%ld.%ld.%ld ...\n", ( tmp_ip_addr & 0xff000000 ) >> 24, ( tmp_ip_addr & 0x00ff0000 ) >> 16, ( tmp_ip_addr & 0x0000ff00 ) >> 8, ( tmp_ip_addr & 0x000000ff ) );
@@ -2010,9 +2001,6 @@ restart:
 
 	uip_setnetmask( ip );
 
-	// should we also set default router ip address?
-	//uip_setdraddr();
-
 	// show current progress of the process
 	do_http_progress( WEBFAILSAFE_PROGRESS_START );
 
@@ -2026,7 +2014,6 @@ restart:
 		 *	The ethernet receive routine will process it.
 		 */
 		if ( eth_rx() > 0 ) {
-			printf("Packet is received!!!\n");
 			HttpdHandler();
 		}
 
@@ -2056,33 +2043,28 @@ restart:
 
 		// show progress
 		do_http_progress( WEBFAILSAFE_PROGRESS_UPLOAD_READY );
-		net_start_again();
-
-
 		// try to make upgrade!
-		// if ( do_http_upgrade( net_boot_file_size, webfailsafe_upgrade_type ) >= 0 ) {
-		// 	mdelay( 500 );
-		// 	do_http_progress( WEBFAILSAFE_PROGRESS_UPGRADE_READY );
-		// 	mdelay( 500 );
+		if ( do_http_upgrade( net_boot_file_size, webfailsafe_upgrade_type ) >= 0 ) {
+			mdelay( 500 );
+			do_http_progress( WEBFAILSAFE_PROGRESS_UPGRADE_READY );
+			mdelay( 500 );
 
-		// 	/* reset the board */
-		// 	do_reset( NULL, 0, 0, NULL );
-		// }
+			/* reset the board */
+			do_reset( NULL, 0, 0, NULL );
+		}
+		do_reset( NULL, 0, 0, NULL );
 		break;
 	}
 
-	// reset global variables to default state
-	webfailsafe_is_running = 0;
-	webfailsafe_ready_for_upgrade = 0;
-	webfailsafe_upgrade_type = WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE;
+	// // reset global variables to default state
+	// webfailsafe_is_running = 0;
+	// webfailsafe_ready_for_upgrade = 0;
+	// webfailsafe_upgrade_type = WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE;
 
-	net_boot_file_size = 0;
+	// net_boot_file_size = 0;
 
-	do_http_progress( WEBFAILSAFE_PROGRESS_UPGRADE_FAILED );
+	// do_http_progress( WEBFAILSAFE_PROGRESS_UPGRADE_FAILED );
 
-	// go to restart
-	goto restart;
-
-	return( -1 );
+	return(0);
 }
 
