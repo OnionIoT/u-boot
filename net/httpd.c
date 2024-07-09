@@ -14,6 +14,22 @@
 #include "../httpd/uipopt.h"
 #include "../httpd/uip.h"
 #include "../httpd/uip_arp.h"
+#include "../include/mtd.h"
+
+// progress state info
+#define WEBFAILSAFE_PROGRESS_START			0
+#define WEBFAILSAFE_PROGRESS_TIMEOUT			1
+#define WEBFAILSAFE_PROGRESS_UPLOAD_READY		2
+#define WEBFAILSAFE_PROGRESS_UPGRADE_READY		3
+#define WEBFAILSAFE_PROGRESS_UPGRADE_FAILED		4
+
+// update type
+#define WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE		0
+#define WEBFAILSAFE_UPGRADE_TYPE_UBOOT			1
+#define WEBFAILSAFE_UPGRADE_TYPE_ART			2
+#define WEBFAILSAFE_UPLOAD_RAM_ADDRESS			0x81800000
+#define WEBFAILSAFE_UPLOAD_UBOOT_SIZE_IN_BYTES		( 640 * 1024 )
+#define WEBFAILSAFE_UPLOAD_ART_SIZE_IN_BYTES		( 64 * 1024 )
 
 #define BUF ((struct uip_eth_hdr *)&uip_buf[0])
 extern void led_on(void);
@@ -21,7 +37,6 @@ extern void led_off(void);
 //#include <gpio.h>
 // #include <spi_api.h>
 
-extern void NetSendHttpd(void);
 static int arptimer = 0;
 
 void HttpdHandler( void ){
@@ -32,7 +47,7 @@ void HttpdHandler( void ){
 			uip_periodic( i );
 			if ( uip_len > 0 ) {
 				uip_arp_out();
-				NetSendHttpd();
+				net_send_httpd();
 			}
 		}
 
@@ -46,12 +61,12 @@ void HttpdHandler( void ){
 			uip_input();
 			if ( uip_len > 0 ) {
 				uip_arp_out();
-				NetSendHttpd();
+				net_send_httpd();
 			}
 		} else if ( BUF->type == htons( UIP_ETHTYPE_ARP ) ) {
 			uip_arp_arpin();
 			if ( uip_len > 0 ) {
-				NetSendHttpd();
+				net_send_httpd();
 			}
 		}
 	}
@@ -64,26 +79,32 @@ void HttpdStart( void ){
 	httpd_init();
 }
 
-int do_http_upgrade( const ulong size, const int upgrade_type ){
+int do_http_upgrade( ulong size, const int upgrade_type ){
+	// need to take these values from configs
+	if(size % 0x800){
+		ulong rem = 0x800 - size % 0x800;
+		size = size + rem;
+	}
+	#define WEBFAILSAFE_UPLOAD_RAM_ADDRESS 0x81800000
 
-	// if ( upgrade_type == WEBFAILSAFE_UPGRADE_TYPE_UBOOT ) {
+	if ( upgrade_type == WEBFAILSAFE_UPGRADE_TYPE_UBOOT ) {
+		
+		// not supported yet
+		printf( "\n\n****************************\n*     U-BOOT UPGRADING     *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n" );
+		return(-1);
 
-	// 	printf( "\n\n****************************\n*     U-BOOT UPGRADING     *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n" );
-	// 	return( raspi_erase_write( ( u8_t * )WEBFAILSAFE_UPLOAD_RAM_ADDRESS, WEBFAILSAFE_UPLOAD_UBOOT_ADDRESS - CFG_FLASH_BASE, WEBFAILSAFE_UPLOAD_UBOOT_SIZE_IN_BYTES ) );
+	} else if ( upgrade_type == WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE ) {
 
-	// } else if ( upgrade_type == WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE ) {
+		printf( "\n\n****************************\n*    FIRMWARE UPGRADING    *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n" );
+		run_command("mtd list", 0);
+		run_command("mtd erase firmware", 0);
+		run_command("mtd write firmware 0x81800000 0x0 fc0800", 0);
+		
+		return (0);
 
-	// 	printf( "\n\n****************************\n*    FIRMWARE UPGRADING    *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n" );
-	// 	return( raspi_erase_write( ( u8_t * )WEBFAILSAFE_UPLOAD_RAM_ADDRESS, WEBFAILSAFE_UPLOAD_KERNEL_ADDRESS - CFG_FLASH_BASE, size ) );
-
-	// } else if ( upgrade_type == WEBFAILSAFE_UPGRADE_TYPE_ART ) {
-
-	// 	printf( "\n\n****************************\n*      ART  UPGRADING      *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n" );
-	// 	return( raspi_erase_write( ( u8_t * )WEBFAILSAFE_UPLOAD_RAM_ADDRESS, WEBFAILSAFE_UPLOAD_ART_ADDRESS - CFG_FLASH_BASE, WEBFAILSAFE_UPLOAD_ART_SIZE_IN_BYTES ) );
-
-	// } else {
-	// 	return(-1);
-	// }
+	} else {
+		return(-1);
+	}
 
 	return(-1);
 }

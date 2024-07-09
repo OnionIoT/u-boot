@@ -1,6 +1,3 @@
-#
-# Makefile for http stuff
-#
 fs.c:   fsdata.c
 
 fsdata.c:
@@ -11,27 +8,3 @@ obj-y += httpd.o
 obj-y += uip_arp.o
 obj-y += uip_arch.o
 obj-y += uip.o
-
-
-
-# LIB   = libhttpd.a
-# OBJS += uip.o uip_arch.o uip_arp.o httpd.o fs.o
-
-# all:    $(LIB)
-
-# fs.c:   fsdata.c
-
-
-
-# $(LIB): $(START) $(OBJS)
-# 	    $(AR) crv $@ $(OBJS)
-
-# #########################################################################
-
-# .depend: Makefile $(OBJS:.o=.c)
-# 	     $(CC) -M $(CFLAGS) $(OBJS:.o=.c) > $@
-
-# sinclude .depend
-
-# #########################################################################
-

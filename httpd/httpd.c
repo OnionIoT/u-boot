@@ -21,6 +21,21 @@
 #define ISO_cr					0x0d
 #define ISO_tab					0x09
 
+// progress state info
+#define WEBFAILSAFE_PROGRESS_START			0
+#define WEBFAILSAFE_PROGRESS_TIMEOUT			1
+#define WEBFAILSAFE_PROGRESS_UPLOAD_READY		2
+#define WEBFAILSAFE_PROGRESS_UPGRADE_READY		3
+#define WEBFAILSAFE_PROGRESS_UPGRADE_FAILED		4
+
+// update type
+#define WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE		0
+#define WEBFAILSAFE_UPGRADE_TYPE_UBOOT			1
+#define WEBFAILSAFE_UPGRADE_TYPE_ART			2
+#define WEBFAILSAFE_UPLOAD_RAM_ADDRESS			0x81800000
+#define WEBFAILSAFE_UPLOAD_UBOOT_SIZE_IN_BYTES		( 640 * 1024 )
+#define WEBFAILSAFE_UPLOAD_ART_SIZE_IN_BYTES		( 64 * 1024 )
+
 // we use this so that we can do without the ctype library
 #define is_digit(c)				((c) >= '0' && (c) <= '9')
 

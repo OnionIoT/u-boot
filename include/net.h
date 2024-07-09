@@ -22,27 +22,7 @@
 #include <linux/if_ether.h>
 #include <rand.h>
 
-// progress state info
-#define WEBFAILSAFE_PROGRESS_START			0
-#define WEBFAILSAFE_PROGRESS_TIMEOUT			1
-#define WEBFAILSAFE_PROGRESS_UPLOAD_READY		2
-#define WEBFAILSAFE_PROGRESS_UPGRADE_READY		3
-#define WEBFAILSAFE_PROGRESS_UPGRADE_FAILED		4
-
-// update type
-#define WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE		0
-#define WEBFAILSAFE_UPGRADE_TYPE_UBOOT			1
-#define WEBFAILSAFE_UPGRADE_TYPE_ART			2
-
-// #define PKTSIZE			1518
-// #define PKTSIZE_ALIGN		1536
-// #define PKTALIGN	64
-// #define FLANK_TEST_SPX_ALIGNMENT 16
-
 #define UIP_LLH_LEN     14
-
-#define NUM_RX_DESC 24
-#define NUM_TX_DESC 24
 
 struct bd_info;
 struct cmd_tbl;
@@ -509,7 +489,7 @@ extern struct in_addr net_dns_server;
 /* Our 2nd Domain Name Server (0 = unknown) */
 extern struct in_addr net_dns_server2;
 #endif
-extern char	net_nis_domain[32];	/* Our IS domain */
+extern char	net_nis_domain[32];	/* Our NIS domain */
 extern char	net_hostname[32];	/* Our hostname */
 #ifdef CONFIG_NET
 extern char	net_root_path[CONFIG_BOOTP_MAX_ROOT_PATH_LEN];	/* Our root path */
@@ -970,11 +950,6 @@ int wget_with_dns(ulong dst_addr, char *uri);
  */
 bool wget_validate_uri(char *uri);
 
-
-uchar 		NetArpWaitPacketBuf[PKTSIZE_ALIGN + PKTALIGN];
-ulong		NetArpWaitTimerStart;
-int		NetArpWaitTry;
-
 typedef struct _BUFFER_ELEM_    BUFFER_ELEM;
 
 struct _BUFFER_ELEM_
@@ -994,13 +969,7 @@ struct _VALID_BUFFER_STRUCT_
     BUFFER_ELEM    *tail;	
 } rt2880_free_buf_list;
 
-extern int      NetLoopHttpd(void);
+extern int      net_loop_httpd(void);
+extern void 	net_send_httpd(void);
 
-/* copy IP */
-static inline void NetCopyIP(void *to, void *from)
-{
-	memcpy(to, from, sizeof(ulong));
-}
-
-void NetReceiveHttpd( volatile uchar * inpkt, int len );
 #endif /* __NET_H__ */

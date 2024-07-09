@@ -135,18 +135,20 @@
 #include <linux/delay.h>
 #include "../tools/env/fw_env.h"
 
-uchar 		NetArpWaitPacketBuf[PKTSIZE_ALIGN + PKTALIGN];
-ulong		NetArpWaitTimerStart;
-int		NetArpWaitTry;
+// progress state info
+#define WEBFAILSAFE_PROGRESS_START			0
+#define WEBFAILSAFE_PROGRESS_TIMEOUT			1
+#define WEBFAILSAFE_PROGRESS_UPLOAD_READY		2
+#define WEBFAILSAFE_PROGRESS_UPGRADE_READY		3
+#define WEBFAILSAFE_PROGRESS_UPGRADE_FAILED		4
 
+// update type
+#define WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE		0
+#define WEBFAILSAFE_UPGRADE_TYPE_UBOOT			1
+#define WEBFAILSAFE_UPGRADE_TYPE_ART			2
 
+void net_receive_httpd( uchar * inpkt, int len );
 /** BOOTP EXTENTIONS **/
-
-#ifdef CONFIG_NET_VLAN
-/* XXX in both little & big endian machines 0xFFFF == ntohs(-1) */
-ushort		NetOurVLAN = 0xFFFF;		/* default is without VLAN	*/
-ushort		NetOurNativeVLAN = 0xFFFF;	/* ditto			*/
-#endif
 
 typedef struct bd_info bd_t;
 
@@ -1231,10 +1233,12 @@ void net_process_received_packet(uchar *in_packet, int len)
 #endif
 	ushort cti = 0, vlanid = VLAN_NONE, myvlanid, mynvlanid;
 
-	if ( webfailsafe_is_running ) {
-                NetReceiveHttpd( in_packet, len );
-                 return;
+	if (webfailsafe_is_running)
+	{
+        net_receive_httpd(in_packet, len);
+        return;
     }
+
 	debug_cond(DEBUG_NET_PKT, "packet received\n");
 	if (DEBUG_NET_PKT_TRACE)
 		print_hex_dump_bytes("rx: ", DUMP_PREFIX_OFFSET, in_packet,
@@ -1852,19 +1856,13 @@ void print_IPaddr (struct in_addr x)
 	puts (tmp);
 }
 
-// struct in_addr getenv_IPaddr (char *var)
-// {
-// 	return (string_to_ip(fw_getenv(var)));
-// }
-/* for web failsafe mod , added by hubo Jun 29th 2014 */
-
 /**********************************************************************************
  * HTTPD section
  */
 
 #define BUF	((struct uip_eth_hdr *)&uip_buf[0])
 
-void NetSendHttpd( void ){
+void net_send_httpd( void ){
 	volatile uchar *tmpbuf = net_tx_packet;
 	int i;
 
@@ -1875,11 +1873,10 @@ void NetSendHttpd( void ){
 	for( ; i < uip_len; i++ ) {
 		tmpbuf[i] = uip_appdata[ i - 40 - UIP_LLH_LEN ];
 	}
-
 	eth_send( net_tx_packet, uip_len );
 }
 
-void NetReceiveHttpd( volatile uchar * inpkt, int len ) {
+void net_receive_httpd( uchar * inpkt, int len ) {
 	memcpy( uip_buf, ( const void * )inpkt, len );
 	uip_len = len;
 
@@ -1890,14 +1887,14 @@ void NetReceiveHttpd( volatile uchar * inpkt, int len ) {
 
 		if ( uip_len > 0 ) {
 			uip_arp_out();
-			NetSendHttpd();
+			net_send_httpd();
 		}
 	} else if( BUF->type == htons( UIP_ETHTYPE_ARP ) ) {
 
 		uip_arp_arpin();
 
 		if ( uip_len > 0 ) {
-			NetSendHttpd();
+			net_send_httpd();
 		}
 	}
 }
@@ -1907,26 +1904,16 @@ void NetReceiveHttpd( volatile uchar * inpkt, int len ) {
  * HTTP web server for web failsafe mode
  *
  ***************************************/
-int NetLoopHttpd( void ){
-	DECLARE_GLOBAL_DATA_PTR;
-	gd->bd->bi_ip_addr = string_to_ip_ulong("192.168.8.8");
-	bd_t *bd = gd->bd;
+int net_loop_httpd( void ){
+	
 	unsigned short int ip[2];
 	struct uip_eth_addr eaddr;
+	struct in_addr host_ip_addr;
 
-#ifdef CONFIG_NET_MULTI
-	NetRestarted = 0;
-	NetDevExists = 0;
-#endif
-
-	/* XXX problem with bss workaround */
-	net_tx_packet	= NULL;
-	net_tx_packet	= NULL;
 #ifdef DEBUG	
    printf("File: %s, Func: %s, Line: %d\n", __FILE__,__FUNCTION__ , __LINE__);
-#endif   
-//
-
+#endif
+	
 	int ret = -EINVAL;
 
 	net_restarted = 0;
@@ -1948,59 +1935,43 @@ int NetLoopHttpd( void ){
 	} else {
 		eth_init_state_only();
 	}
+	net_init_loop();
    
-	// restart label
 restart:
 
-	// get MAC address
-#ifdef CONFIG_NET_MULTI
-	memcpy( net_ethaddr, eth_get_dev()->enetaddr, 6 );
-#else
-	memcpy( net_ethaddr, eth_get_ethaddr(), 6 );
+	// set host IP address
+	host_ip_addr = string_to_ip("8.8.168.192");
+	net_gateway = string_to_ip("1.8.168.192");
+
+#ifdef CONFIG_NET_VLAN
+	net_our_vlan		= getenv_VLAN( "vlan" );
+	net_native_vlan	= getenv_VLAN( "nvlan" );
 #endif
 
+	// get and set MAC address
 	eaddr.addr[0] = net_ethaddr[0];
 	eaddr.addr[1] = net_ethaddr[1];
 	eaddr.addr[2] = net_ethaddr[2];
 	eaddr.addr[3] = net_ethaddr[3];
 	eaddr.addr[4] = net_ethaddr[4];
 	eaddr.addr[5] = net_ethaddr[5];
-
-	// set MAC address
 	uip_setethaddr( eaddr );
 
-	// set ip and other addresses
-	// TODO: do we need this with uIP stack?
-	NetCopyIP( &net_ip, &bd->bi_ip_addr );
-
-	// hard coded for now
-	net_gateway		=  string_to_ip("255.8.168.192");
-	net_netmask	=  string_to_ip("0.255.255.255");
-#ifdef CONFIG_NET_VLAN
-	NetOurVLAN		= getenv_VLAN( "vlan" );
-	NetOurNativeVLAN	= getenv_VLAN( "nvlan" );
-#endif
-
 	// start server...
-	// hard coded for now
-	ulong tmp_ip_addr = string_to_ip_ulong("8.8.168.192");
-
-	printf( "HTTP server starting at %ld.%ld.%ld.%ld ...\n", ( tmp_ip_addr & 0xff000000 ) >> 24, ( tmp_ip_addr & 0x00ff0000 ) >> 16, ( tmp_ip_addr & 0x0000ff00 ) >> 8, ( tmp_ip_addr & 0x000000ff ) );
+	printf( "HTTP server starting at %u.%u.%u.%u ...\n", ( host_ip_addr.s_addr & 0xff000000 ) >> 24, 
+		( host_ip_addr.s_addr & 0x00ff0000 ) >> 16, ( host_ip_addr.s_addr & 0x0000ff00 ) >> 8, ( host_ip_addr.s_addr & 0x000000ff ) );
 	
 	HttpdStart();
 
-	// set local host ip address
-	ip[0] = htons( ( tmp_ip_addr & 0xFFFF0000 ) >> 16 );
-	ip[1] = htons( tmp_ip_addr & 0x0000FFFF );
-	
+	ip[0] = htons( ( host_ip_addr.s_addr & 0xFFFF0000 ) >> 16 );
+	ip[1] = htons( host_ip_addr.s_addr & 0x0000FFFF );
 	uip_sethostaddr( ip );
 
-	// set network mask (255.255.255.0 -> local network)
+	// set network mask (255.255.255.0)
 	ip[0] = htons( ( ( 0xFFFFFF00 & 0xFFFF0000 ) >> 16 ) );
 	ip[1] = htons( ( 0xFFFFFF00 & 0x0000FFFF ) );
-
 	uip_setnetmask( ip );
-
+	
 	// show current progress of the process
 	do_http_progress( WEBFAILSAFE_PROGRESS_START );
 
@@ -2043,6 +2014,7 @@ restart:
 
 		// show progress
 		do_http_progress( WEBFAILSAFE_PROGRESS_UPLOAD_READY );
+		
 		// try to make upgrade!
 		if ( do_http_upgrade( net_boot_file_size, webfailsafe_upgrade_type ) >= 0 ) {
 			mdelay( 500 );
@@ -2052,19 +2024,20 @@ restart:
 			/* reset the board */
 			do_reset( NULL, 0, 0, NULL );
 		}
-		do_reset( NULL, 0, 0, NULL );
 		break;
 	}
 
-	// // reset global variables to default state
-	// webfailsafe_is_running = 0;
-	// webfailsafe_ready_for_upgrade = 0;
-	// webfailsafe_upgrade_type = WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE;
+	// reset global variables to default state
+	webfailsafe_is_running = 0;
+	webfailsafe_ready_for_upgrade = 0;
+	webfailsafe_upgrade_type = WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE;
 
-	// net_boot_file_size = 0;
+	net_boot_file_size = 0;
 
-	// do_http_progress( WEBFAILSAFE_PROGRESS_UPGRADE_FAILED );
+	do_http_progress( WEBFAILSAFE_PROGRESS_UPGRADE_FAILED );
 
-	return(0);
+	goto restart;
+
+	return(-1);
 }
 
