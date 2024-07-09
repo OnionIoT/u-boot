@@ -1,0 +1,5 @@
+config WEB_RECOVERY
+    bool "Firmware web recovery support"
+    help
+        Firmware flashing support via http server is
+        setuped on the device.

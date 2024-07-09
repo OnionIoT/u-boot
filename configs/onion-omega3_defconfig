@@ -78,3 +78,4 @@ CONFIG_USE_BOOTCOMMAND=y
 CONFIG_BOOTCOMMAND="sf probe && mtd read firmware 0x81800000 && bootm 0x81800000"
 CONFIG_USE_BOOTARGS=y
 CONFIG_BOOTARGS="console=ttyS0,115200 rootfstype=squashfs,jffs2"
+CONFIG_WEB_RECOVERY=y
