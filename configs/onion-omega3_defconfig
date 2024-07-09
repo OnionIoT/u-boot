@@ -63,7 +63,7 @@ CONFIG_FS_FAT=y
 CONFIG_BLK=y
 CONFIG_BAUDRATE=115200
 CONFIG_MTD=y
-CONFIG_MTDPARTS_DEFAULT="spi0.0:640k(u-boot),64k(u-boot-env),64k(factory);spi0.1:24m(firmware)"
+CONFIG_MTDPARTS_DEFAULT="spi0.0:640k(u-boot),64k(u-boot-env),64k(factory);spi0.1:256m(firmware)"
 CONFIG_MTDIDS_DEFAULT="nor0=spi0.0,spi-nand0=spi0.1"
 CONFIG_DM_MTD=y
 CONFIG_DM_SPI=y
