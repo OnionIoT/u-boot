@@ -9,8 +9,8 @@
 #include <dt-bindings/gpio/gpio.h>
 
 / {
-	compatible = "onion,omega2p", "ralink,mt7628a-soc";
-	model = "Onion Omega2+";
+	compatible = "onion,omega3", "ralink,mt7628a-soc";
+	model = "Onion Omega3";
 
 	aliases {
 		serial0 = &uart0;
