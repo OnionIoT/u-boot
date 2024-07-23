@@ -396,6 +396,17 @@
 		interrupts = <18>;
 	};
 
+	ohci: ohci@101c1000 {
+		compatible = "generic-ohci";
+		reg = <0x101c1000 0x1000>;
+
+		phys = <&usb_phy>;
+		phy-names = "usb";
+
+		interrupt-parent = <&intc>;
+		interrupts = <18>;
+	};
+
 	mmc: mmc@10130000 {
 		compatible = "mediatek,mt7620-mmc";
 		reg = <0x10130000 0x4000>;

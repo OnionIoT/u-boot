@@ -1,0 +1,12 @@
+if BOARD_ONION_OMEGA2P
+
+config SYS_BOARD
+	default "omega2p"
+
+config SYS_VENDOR
+	default "onion"
+
+config SYS_CONFIG_NAME
+	default "onion-omega2p"
+
+endif
