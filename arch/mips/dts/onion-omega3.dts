@@ -9,8 +9,8 @@
 #include <dt-bindings/gpio/gpio.h>
 
 / {
-	compatible = "onion,omega2p", "ralink,mt7628a-soc";
-	model = "Onion Omega2+";
+	compatible = "onion,omega3", "ralink,mt7628a-soc";
+	model = "Onion Omega3";
 
 	aliases {
 		serial0 = &uart0;
@@ -68,4 +68,16 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&ephy_iot_mode>;
 	mediatek,poll-link-phy = <0>;
+};
+
+&mmc {
+	status = "okay";
+
+	bus-width = <4>;
+	max-frequency = <48000000>;
+	cap-sd-highspeed;
+	cap-mmc-highspeed;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&sd_iot_mode>;
 };
