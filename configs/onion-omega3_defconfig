@@ -75,9 +75,7 @@ CONFIG_IPADDR="192.168.8.8"
 CONFIG_SERVERIP="192.168.8.100"
 CONFIG_BOOTFILE="firmware.bin"
 CONFIG_USE_BOOTCOMMAND=y
-CONFIG_BOOTCOMMAND="ubi part firmware && ubi read 0x81800000 kernel && bootm 0x81800000"
+CONFIG_BOOTCOMMAND="sf probe && mtd read firmware 81800000 0 400000 && bootm 81800000"
 CONFIG_USE_BOOTARGS=y
-CONFIG_BOOTARGS="console=ttyS0,115200 ubi.mtd=firmware root=/dev/ubiblock0_1 rootfstype=squashfs,ubifs"
-CONFIG_MTD_UBI=y
-CONFIG_CMD_UBI=y
+CONFIG_BOOTARGS="console=ttyS0,115200 rootfstype=squashfs,ubifs"
 CONFIG_MIPS_RELOCATION_TABLE_SIZE=0x8300
