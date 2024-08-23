@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright (C) 2024 Lazar Demin <lazar@onioniot.com>
+ * Copyright (C) 2024 Zheng Han <zh@onioniot.com>, Lazar Demin <lazar@onioniot.com>
  */
 #ifndef __CONFIG_ONION_OMEGA3_H
 #define __CONFIG_ONION_OMEGA3_H
