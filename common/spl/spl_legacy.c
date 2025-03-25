@@ -3,6 +3,8 @@
  * Copyright (C) 2020 Stefan Roese <sr@denx.de>
  */
 
+#define DEBUG  // Enable debug messages
+
 #include <common.h>
 #include <image.h>
 #include <log.h>
@@ -22,6 +24,23 @@ static void spl_parse_legacy_validate(uintptr_t start, uintptr_t size)
 	uintptr_t spl_start = (uintptr_t)_start;
 	uintptr_t spl_end = (uintptr_t)&_image_binary_end;
 	uintptr_t end = start + size;
+
+    printf("SPL Validation:\n");
+    printf("  SPL Start: 0x%08lx\n", (unsigned long)spl_start);
+    printf("  SPL End:   0x%08lx\n", (unsigned long)spl_end);
+    printf("  Image Start: 0x%08lx\n", (unsigned long)start);
+    printf("  Image End:   0x%08lx\n", (unsigned long)end);
+    printf("  Image Size:  0x%08lx (%lu bytes)\n", (unsigned long)size, (unsigned long)size);
+
+    // Print condition evaluations
+    printf("  (start >= spl_start && start < spl_end) = %d\n",
+           (start >= spl_start && start < spl_end));
+    printf("  (end > spl_start && end <= spl_end) = %d\n",
+           (end > spl_start && end <= spl_end));
+    printf("  (start < spl_start && end >= spl_end) = %d\n",
+           (start < spl_start && end >= spl_end));
+    printf("  (start > end && end > spl_start) = %d\n",
+           (start > end && end > spl_start));
 
 	if ((start >= spl_start && start < spl_end) ||
 	    (end > spl_start && end <= spl_end) ||
