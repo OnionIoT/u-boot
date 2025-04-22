@@ -5,6 +5,7 @@
 
  #include <common.h>
  #include <asm/io.h>
+ #include <env.h>
  
  #define OMEGA2_REG(x)		    (*((volatile u32 *)(x)))
  #define	OMEGA2_SYSCTL_BASE 	    0xB0000000
@@ -53,7 +54,9 @@
  int  board_late_init (void)
  {
      gpio_init();
- 
+
+     if (detect_rst())
+	env_set("bootdelay", "40");
+
      return 0;
  }
- 
