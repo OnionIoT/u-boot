@@ -43,7 +43,7 @@ config SPL_SIZE_LIMIT
 	default 0x30000 if ARCH_MVEBU && ARMADA_32BIT
 	default 0x0
 	help
-	  Specifies the maximum length of the U-Boot SPL image.
+	  Specifies the maximum length of U-Boot SPL images.
 	  If this value is zero, it is ignored.
 
 config SPL_SIZE_LIMIT_SUBTRACT_GD
