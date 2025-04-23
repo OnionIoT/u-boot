@@ -66,10 +66,10 @@ int  board_late_init (void)
 
 	printf(WELCOME_MESSAGE);
 
-	if (detect_rst())
-		env_set("bootdelay", "40"); // show bootmenu for 40 seconds
-	else
-		env_set("bootdelay", "0");  // boot linux immediately
+	if (detect_rst()) {
+		printf("Reset button pressed - entering shell ...\n");
+		env_set("reset_pressed", "1");
+	}
 
 	return 0;
 }
