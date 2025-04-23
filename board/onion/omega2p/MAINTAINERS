@@ -1,0 +1,10 @@
+ONION OMEGA2/2+
+M:	Philip Oberfichtner <pro@denx.de>
+S:	Maintained
+F:	arch/mips/dts/onion-omega2p.dts
+F:	board/onion/omega2p/Kconfig
+F:	board/onion/omega2p/Makefile
+F:	board/onion/omega2p/board.c
+F:	board/onion/omega2p/omega2p.env
+F:	configs/onion-omega2p_defconfig
+F:	include/configs/onion-omega2p.h
