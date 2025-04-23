@@ -27,6 +27,12 @@ config BOARD_MT7628_RFB
 	  SPI-NOR flash, 1 built-in switch with 5 ports, 1 UART, 1 USB host,
 	  1 SDXC, 1 PCIe socket and JTAG pins.
 
+config BOARD_ONION_OMEGA2
+	bool "Onion Omega2/2+"
+	help
+	  Onion Omega2/2+ IoT computer. Has a MT7688 SoC with 64/128 MiB of DDR2
+	  RAM and 16/32 MiB of SPI flash.
+
 config BOARD_VOCORE2
 	bool "VoCore2"
 	select SPL_SERIAL
@@ -52,6 +58,7 @@ config SYS_CONFIG_NAME
 	default "mt7628" if BOARD_MT7628_RFB
 
 source "board/gardena/smart-gateway-mt7688/Kconfig"
+source "board/onion/omega2p/Kconfig"
 source "board/seeed/linkit-smart-7688/Kconfig"
 source "board/vocore/vocore2/Kconfig"
 
