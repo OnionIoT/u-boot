@@ -50,9 +50,21 @@ void gpio_init(void)
 	OMEGA2_REG(OMEGA2_REG_PIODIR+0x04)=val;
 }
 
+#define WELCOME_MESSAGE                                                     \
+	"\n\n"                                                              \
+	"   *************************************************************\n"\
+	"   *  For more info on using U-Boot, visit                     *\n"\
+	"   *  https://documentation.onioniot.com/bootloader/overview   *\n"\
+	"   *                                                           *\n"\
+	"   *  Hold the reset button to enter the U-Boot commandline.   *\n"\
+	"   *************************************************************\n"\
+	"\n"
+
 int  board_late_init (void)
 {
 	gpio_init();
+
+	printf(WELCOME_MESSAGE);
 
 	if (detect_rst())
 		env_set("bootdelay", "40"); // show bootmenu for 40 seconds
