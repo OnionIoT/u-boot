@@ -12,7 +12,7 @@
 #define OMEGA2_REG_PIODIR	(OMEGA2_SYSCTL_BASE + 0x600)
 #define OMEGA2_REG_PIODATA	(OMEGA2_REG_PIODIR + 0x20)
 
-int detect_rst( void )
+static int detect_rst( void )
 {
 	u32 val;
 	val=OMEGA2_REG(0xb0000624); // Read GPIO 44 (reset button)
@@ -20,7 +20,7 @@ int detect_rst( void )
 	return (val&1<<6) ? 1 : 0;
 }
 
-void gpio_init(void)
+static void gpio_init(void)
 {
 	u32 val;
 	printf( "Initializing MT7688 GPIO system.\n" );
@@ -60,7 +60,7 @@ void gpio_init(void)
 	"   *************************************************************\n"\
 	"\n"
 
-int  board_late_init (void)
+int board_late_init (void)
 {
 	gpio_init();
 
