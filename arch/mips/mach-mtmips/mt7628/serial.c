@@ -11,7 +11,7 @@
 void mtmips_spl_serial_init(void)
 {
 #ifdef CONFIG_SPL_SERIAL
-	void __iomem *base = ioremap_nocache(SYSCTL_BASE, SYSCTL_SIZE);
+	void __iomem __maybe_unused *base = ioremap_nocache(SYSCTL_BASE, SYSCTL_SIZE);
 
 #if CONFIG_CONS_INDEX == 1
 	clrbits_32(base + SYSCTL_GPIO_MODE1_REG, UART0_MODE_M);
