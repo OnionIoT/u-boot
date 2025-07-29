@@ -28,6 +28,6 @@ int main(int argc, char *argv[])
 #endif
 #endif
 
-	printf("%d", spl_size_limit);
+	printf("%d", spl_size_limit > 0 ? spl_size_limit : 0);
 	return 0;
 }
